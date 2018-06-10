@@ -58,6 +58,10 @@ step_size = 0.01;
 total_t = 10;
 t = 0:step_size:total_t;
 
+global drag_syms_debug drag_list_debug
+drag_syms_debug = subs(drag);
+drag_list_debug = zeros(3,length(t));
+
 % Initialize motion
 X_init = [0;0;0;0;0;0];
 [X,Xd] = initializeMotion(X_init,udd,t);
@@ -83,6 +87,8 @@ function [X,Xd] = initializeMotion(X_init,qdd,t)
 end
 
 function Xd = findGradient(X,qdd)
+    global drag_syms_debug
+    global drag_debug
     x = X(1);
     y = X(2);
     z = X(3);
@@ -92,11 +98,15 @@ function Xd = findGradient(X,qdd)
 
     qdd = double(subs(qdd));
     Xd = [xd; yd; zd; qdd];
+    
+    drag_debug = double(subs(drag_syms_debug));
 end
 
-function X = RK4(X,qdd,step_size,t)   
+function X = RK4(X,qdd,step_size,t)  
+    global drag_debug drag_list_debug
     for i = 2:length(t)
         k1 = findGradient(X(:,i-1),qdd);
+        drag_list_debug(:,i) = drag_debug;
         k2 = findGradient(X(:,i-1) + step_size*k1/2,qdd);
         k3 = findGradient(X(:,i-1) + step_size*k2/2,qdd);
         k4 = findGradient(X(:,i-1) + step_size*k3,qdd);
